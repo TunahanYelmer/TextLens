@@ -1,0 +1,33 @@
+{
+  "name": "textlens",
+  "version": "1.0.0",
+  "description": "A Chrome extension for OCR (Optical Character Recognition) in a popup.",
+  "main": "background.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "OCR",
+    "Optical Character Recognition",
+    "Text Recognition",
+    "Chrome Extension",
+    "Image Text Extractor",
+    "TextLens OCR",
+    "Extract Text",
+    "Document Scanning",
+    "OCR for Chrome",
+    "Real-time Text Detection",
+    "Screenshot OCR",
+    "Text from Image",
+    "Optical Character Extraction",
+    "Text Reader",
+    "Web-based OCR",
+    "Image-to-Text Converter",
+    "Screen Capture OCR",
+    "OCR Popup",
+    "Chrome OCR Tool",
+    "Text Extraction Tool"
+  ],
+  "author": "https://github.com/TunahanYelmer",
+  "license": "ISC"
+}

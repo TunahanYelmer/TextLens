@@ -4,7 +4,8 @@
   "description": "A Chrome extension for OCR (Optical Character Recognition) in a popup.",
   "main": "background.js",
   "scripts": {
-    "test": "test"
+    "build": "webpack --mode production --config webpack.config.js",
+    "dev": "webpack --mode development --watch --config webpack.config.js"
   },
   "keywords": [
     "OCR",
@@ -29,5 +30,19 @@
     "Text Extraction Tool"
   ],
   "author": "https://github.com/TunahanYelmer",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.15",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.3",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.3.0",
+    "@types/redux": "^3.6.31",
+    "@types/redux-thunk": "^2.1.32",
+    "redux": "^5.0.1",
+    "redux-thunk": "^3.1.0"
+  }
 }

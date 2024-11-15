@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "TextLens OCR",
+  "version": "1.0.0",
+  "description": "A Chrome extension for OCR (Optical Character Recognition) in a popup.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/storage.js", "src/screenshot.js", "src/content.js"]
+    }
+  ],
+  "host_permissions": ["<all_urls>"]
+}

@@ -23,8 +23,9 @@ const handleScreenshot = () => {
         })
       );
     });
-  };
 
+  };
+  
   chrome.browserAction.onClicked.addListener(() => {
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);

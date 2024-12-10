@@ -1,6 +1,6 @@
 import Tesseract from "tesseract.js";
 
-const getTextFromScreenshots = async (dataUrl) => {
+const getTextFromScreenshots = async (croppedImageUrl) => {
     try {
       const detectedLanguage = await Tesseract.detect(dataUrl);
   

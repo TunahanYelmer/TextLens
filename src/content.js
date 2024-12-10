@@ -1,3 +1,5 @@
+
+ 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Content script active on this page.");
 
@@ -13,10 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// Dynamically load the Tesseract worker script
+
 // Function to handle the "scanText" button click
 function handleScanTextClick() {
   try {
-    chrome.runtime.sendMessage({ action: "screenshot" }, handleScreenshotResponse);
+    chrome.runtime.sendMessage(
+      { action: "screenshot" },
+      handleScreenshotResponse
+    );
   } catch (error) {
     console.error("Error sending screenshot message:", error);
   }
@@ -26,10 +33,14 @@ function handleScanTextClick() {
 function handleScreenshotResponse(response) {
   try {
     if (response && response.status === "success") {
-      const { startX, startY, endX, endY } = response.coordinates;
-      console.log("Screenshot coordinates:", startX, startY, endX, endY);
-
-      updateCanvasCoordsInState({ x1: startX, y1: startY, x2: endX, y2: endY });
+      console.log("Coordinates:", response.coordinates);
+      const croppedImageUrl = cropImage(
+        response.screenshotUrl,
+        response.coordinates
+      );
+      croppedImageUrl.then((url) => {
+        chrome.runtime.sendMessage({ action: "performOCR", croppedImageUrl: url });
+      });
       
     } else {
       console.error("Failed to get screenshot coordinates:", response?.message);
@@ -39,53 +50,37 @@ function handleScreenshotResponse(response) {
   }
 }
 
-// Function to retrieve and update the canvas coordinates in the state
-function updateCanvasCoordsInState(canvasCoords) {
-  try {
-    getCurrentState((currentState) => {
-      const updatedState = {
-        ...currentState,
-        canvasCoords,
-      };
+// Function to crop image based on the selected coordinates
+const cropImage = (imageUrl, coordinates) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = imageUrl;
 
-      saveState(updatedState, () => {
-        console.log("Canvas coordinates updated in state:", updatedState.canvasCoords);
-      });
-    });
-  } catch (error) {
-    console.error("Error updating canvas coordinates in state:", error);
-  }
-}
+    img.onload = () => {
+      const { endX, endY, startX, startY } = coordinates;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-// Helper function to retrieve the current state
-function getCurrentState(callback) {
-  try {
-    chrome.storage.local.get("state", (result) => {
-      if (chrome.runtime.lastError) {
-        console.error("Error retrieving state:", chrome.runtime.lastError);
-        callback({});
-        return;
-      }
-      const currentState = result.state || {}; // Fallback to an empty object if state doesn't exist
-      callback(currentState);
-    });
-  } catch (error) {
-    console.error("Error retrieving current state:", error);
-    callback({});
-  }
-}
+      const x = Math.min(startX, endX);
+      const y = Math.min(startY, endY);
 
-// Helper function to save the updated state
-function saveState(newState, callback) {
-  try {
-    chrome.storage.local.set({ state: newState }, () => {
-      if (chrome.runtime.lastError) {
-        console.error("Error saving state:", chrome.runtime.lastError);
-      } else {
-        callback();
-      }
-    });
-  } catch (error) {
-    console.error("Error saving state:", error);
-  }
-}
+      // Calculate the width and height
+      const width = Math.abs(endX - startX);
+      const height = Math.abs(endY - startY);
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
+
+      const croppedImageUrl = canvas.toDataURL();
+      console.log("cropped image: " + croppedImageUrl);
+      resolve(croppedImageUrl);
+    };
+
+    img.onerror = (error) => reject(new Error("Failed to load image: ", error));
+  });
+};
+
+
+

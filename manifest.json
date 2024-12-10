@@ -11,6 +11,16 @@
     "service_worker": "src/background.js",
     "type": "module"
   },
+ "web_accessible_resources": [
+        {
+          "resources": [
+            "src/libs/teserract/worker.min.js",
+            "src/libs/teserract/tesseract-core.wasm.js",
+            "src/libs/teserract/traineddata/*.traineddata.gz"
+          ],
+          "matches": ["<all_urls>"]
+        }
+      ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -18,7 +28,7 @@
         "src/storage.js",
         "src/screenshot.js",
         "src/content.js",
-        "src/libs/html2canvas.min.js"
+        "src/libs/teserract/teserract.min.js"
       ]
     }
   ],

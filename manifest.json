@@ -14,9 +14,13 @@
  "web_accessible_resources": [
         {
           "resources": [
-            "src/libs/teserract/worker.min.js",
+            "src/libs/teserract/tesseract.min.js",
+            "src/libs/teserract/teseract.min.js.map",
             "src/libs/teserract/tesseract-core.wasm.js",
+            "src/libs/teserract/worker.min.js.map",
+            "src/libs/teserract/worker.min.js",
             "src/libs/teserract/traineddata/*.traineddata.gz"
+
           ],
           "matches": ["<all_urls>"]
         }

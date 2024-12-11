@@ -1,97 +1,101 @@
-import Tesseract from "tesseract.js";
+
+// Listen for messages from other parts of the extension
+
+
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "screenshot") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      if (!tab) {
-        sendResponse({ status: "error", message: "No active tab found" });
-        return;
-      }
+  switch (message.action) {
+    case "screenshot":
+      handleScreenshotRequest(sendResponse);
+      console.log("Screenshot event received");
+      return true; // Keep the response channel open for asynchronous responses
 
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: tab.id },
-          func: handleScreenshotSelection,
-        },
-        (results) => {
-          const coordinates = results?.[0]?.result;
-          if (!coordinates) {
-            sendResponse({
-              status: "error",
-              message: "Failed to get coordinates.",
-            });
-            return;
-          }
+    case "performOCR":
+      //handleOCRRequest(message.croppedImageUrl, sendResponse);
+      console.log("OCR event received");
+      return true; // Keep the response channel open for asynchronous responses
+    case "popupOpened":
+      sendResponse({ status: "success", message: "Popup opened." });
+      return true; // Keep the response channel open for asynchronous responses
 
-          chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" }, (screenshotUrl) => {
-            if (chrome.runtime.lastError || !screenshotUrl) {
-              sendResponse({ status: "error", message: "Screenshot failed." });
-              return;
-            }
+    case "popupClosed":
+   
+      sendResponse({ status: "success", message: "Popup closed." });
+      return true; // Keep the response channel open for asynchronous responses
 
-            cropImage(screenshotUrl, coordinates).then((croppedImageUrl) => {
-              sendResponse({ status: "success", croppedImageUrl });
-            });
-          });
-        }
-      );
-    });
-    return true; // Asynchronous response
-  }
+    case "popupUpdated":
+    default:
+      console.error("Unknown action:", message.action);
 
-  if (message.action === "performOCR") {
-    getTextFromScreenshots(message.croppedImageUrl).then((text) => {
-      sendResponse({ status: "success", text });
-    });
-    return true; // Asynchronous response
+      sendResponse({ status: "error", message: "Unknown action." });
+      return false;
   }
 });
 
-// Image cropping function
-const cropImage = (imageUrl, coordinates) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = imageUrl;
+// Handle screenshot request
+function handleScreenshotRequest(sendResponse) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (!tab) {
+      sendResponse({ status: "error", message: "No active tab found." });
+      return;
+    }
 
-    img.onload = () => {
-      const { startX, startY, endX, endY } = coordinates;
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tab.id },
+        func: selectScreenshotArea,
+      },
+      (results) => {
+        const coordinates = results?.[0]?.result;
+        if (!coordinates) {
+          sendResponse({
+            status: "error",
+            message: "Failed to get coordinates.",
+          });
+          return;
+        }
 
-      const x = Math.min(startX, endX);
-      const y = Math.min(startY, endY);
-      const width = Math.abs(endX - startX);
-      const height = Math.abs(endY - startY);
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
-
-      resolve(canvas.toDataURL());
-    };
-
-    img.onerror = reject;
+        chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" }, (screenshotUrl) => {
+          if (chrome.runtime.lastError || !screenshotUrl) {
+            sendResponse({ status: "error", message: "Screenshot failed." });
+            return true;
+          }
+          sendResponse({ status: "success", screenshotUrl, coordinates });
+          
+         
+        });
+      }
+    );
   });
-};
+}
 
-// Tesseract OCR function
-const getTextFromScreenshots = async (croppedImageUrl) => {
+// Dynamically load Tesseract.js
+
+// Handle OCR requests
+const handleOCRRequest = async (croppedImageUrl, sendResponse) => {
   try {
-    const result = await Tesseract.recognize(croppedImageUrl, "eng", {
-      logger: (m) => console.log(m),
-    });
-    return result.data.text;
+    (async () => {
+      const src = chrome.runtime.getURL("src/tesseract.js");  // Path to your bundled script
+      src.Promise.resolve(croppedImageUrl); //
+      contentMain.getTextFromScreenshots(croppedImageUrl);  // Call the function from the imported module
+    })();
+    
   } catch (error) {
-    console.error("OCR error:", error);
-    return null;
+    console.error("OCR Error:", error);
+    sendResponse({ status: "error", message: error.message });
   }
 };
 
-// Screenshot selection handler
-function handleScreenshotSelection() {
+// Other event listeners remain unchanged...
+
+
+
+// Function to select the screenshot area on the page
+function selectScreenshotArea() {
   return new Promise((resolve) => {
     let startX, startY;
+
 
     const handleMouseDown = (event) => {
       startX = event.clientX;
